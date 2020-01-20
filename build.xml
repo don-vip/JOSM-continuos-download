@@ -14,10 +14,11 @@
     <property name="plugin.description" value="Downloads new data when you pan/zoom"/>
     <property name="plugin.icon" value="images/continuous-download.png"/>
     <property name="plugin.link" value="https://github.com/JOSM/JOSM-continuos-download"/>
-    
+    <property name="plugin.canloadatruntime" value="true"/>
+
 	<property name="josm" location="../../core/dist/josm-custom.jar"/>
 	<property name="plugin.dist.dir" value="../../dist"/>
-	
+
     <target name="additional-manifest">
         <manifest file="MANIFEST" mode="update">
             <attribute name="7588_Plugin-Url" value="v1.1.01;https://github.com/Gnonthgol/JOSM-continuos-download/releases/download/v1.1.01/continuosDownload.jar" />
@@ -33,5 +34,5 @@
 
     <!-- ** include targets that all plugins have in common ** -->
     <import file="../build-common.xml"/>
-  
+
 </project>
