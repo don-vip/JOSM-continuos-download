@@ -30,10 +30,11 @@ import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.spi.preferences.Config;
+import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Shortcut;
 
-public class DownloadPlugin extends Plugin implements ZoomChangeListener {
+public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destroyable {
 
     /**
      * The worker that runs all our downloads, it have more threads than
@@ -52,6 +53,9 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener {
     private Bounds lastBbox;
     private boolean active;
 
+    private DownloadPreference preference;
+    private JCheckBoxMenuItem menuItem;
+
     /**
      * Constructs a new {@code DownloadPlugin}.
      * @param info plugin info
@@ -64,7 +68,7 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener {
         NavigatableComponent.addZoomChangeListener(this);
 
         ToggleAction toggle = new ToggleAction();
-        JCheckBoxMenuItem menuItem = MainMenu.addWithCheckbox(MainApplication.getMenu().fileMenu, toggle,
+        menuItem = MainMenu.addWithCheckbox(MainApplication.getMenu().fileMenu, toggle,
                 MainMenu.WINDOW_MENU_GROUP.ALWAYS);
         menuItem.setState(active);
         toggle.addButtonModel(menuItem.getModel());
@@ -72,7 +76,9 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener {
 
     @Override
     public PreferenceSetting getPreferenceSetting() {
-        return new DownloadPreference();
+        if (preference == null)
+            preference = new DownloadPreference();
+        return preference;
     }
 
     @Override
@@ -171,5 +177,14 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener {
 
     public static List<String> getStrategies() {
         return new ArrayList<>(strats.keySet());
+    }
+
+    @Override
+    public void destroy() {
+        NavigatableComponent.removeZoomChangeListener(this);
+        worker.shutdown();
+        MainApplication.getMenu().fileMenu.remove(menuItem);
+        if (preference != null)
+            preference.destroy();
     }
 }
