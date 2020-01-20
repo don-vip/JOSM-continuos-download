@@ -5,6 +5,8 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.Box;
 import javax.swing.JCheckBox;
@@ -16,12 +18,13 @@ import javax.swing.JTextField;
 import org.openstreetmap.josm.gui.preferences.DefaultTabPreferenceSetting;
 import org.openstreetmap.josm.gui.preferences.PreferenceTabbedPane;
 import org.openstreetmap.josm.spi.preferences.Config;
+import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.GBC;
 
 /**
  * Plugin preferences.
  */
-public class DownloadPreference extends DefaultTabPreferenceSetting {
+public class DownloadPreference extends DefaultTabPreferenceSetting implements Destroyable {
 
     private final JCheckBox activeDefault = new JCheckBox(tr("Activate continuous downloads at startup."));
     private final JTextField maxThreads = new JTextField(4);
@@ -32,6 +35,7 @@ public class DownloadPreference extends DefaultTabPreferenceSetting {
     private final JComboBox<String> strategy = new JComboBox<>();
     private final JCheckBox quietDownload = new JCheckBox(tr("Supress the default modal progress monitor when downloading."));
 
+    private final Map<PreferenceTabbedPane, JPanel> guiPanes = new HashMap<>();
     /**
      * Constructs a new {@code DownloadPreference}.
      */
@@ -101,6 +105,7 @@ public class DownloadPreference extends DefaultTabPreferenceSetting {
 
         panel.add(Box.createVerticalGlue(), GBC.eol().fill(GridBagConstraints.VERTICAL));
         createPreferenceTabWithScrollPane(gui, panel);
+        guiPanes.put(gui, panel);
     }
 
     @Override
@@ -116,5 +121,10 @@ public class DownloadPreference extends DefaultTabPreferenceSetting {
         Config.getPref().put("plugin.continuos_download.strategy", (String) strategy.getSelectedItem());
         Config.getPref().putBoolean("plugin.continuos_download.quiet_download", quietDownload.isSelected());
         return r;
+    }
+
+    @Override
+    public void destroy() {
+        guiPanes.forEach((gui, panel) -> gui.remove(panel));
     }
 }
