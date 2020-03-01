@@ -34,13 +34,7 @@ public class BoxStrategy extends AbstractDownloadStrategy {
         // Sort the set from largest to smalest, there is a better chance of
         // getting good pactitions if you start with the biggest boxes because
         // the smaller boxes have little impact on the overall score.
-        Collections.sort(list, new Comparator<Box>() {
-
-            @Override
-            public int compare(Box ba, Box bb) {
-                return Double.compare(bb.size(), ba.size());
-            }
-        });
+		Collections.sort(list, Comparator.comparingDouble(Box::size).reversed());
 
         PriorityQueue<Partition> q = new PriorityQueue<>();
         q.add(new Partition());
