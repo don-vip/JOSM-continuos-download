@@ -91,6 +91,8 @@ public abstract class AbstractDownloadStrategy {
 
     private static Collection<Bounds> getExisting(Class<?> klass) {
         if (klass.isAssignableFrom(OsmDataLayer.class)) {
+            if (!MainApplication.isDisplayingMapView())
+                return null;
             OsmDataLayer layer = MainApplication.getMap().mapView.getLayerManager().getEditLayer();
             if (layer == null) {
                 Collection<Layer> layers = MainApplication.getMap().mapView.getLayerManager().getLayers();
