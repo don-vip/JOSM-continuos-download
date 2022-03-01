@@ -7,17 +7,21 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import javax.swing.ButtonModel;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.Bounds;
@@ -26,7 +30,10 @@ import org.openstreetmap.josm.gui.MainMenu;
 import org.openstreetmap.josm.gui.MapView;
 import org.openstreetmap.josm.gui.NavigatableComponent;
 import org.openstreetmap.josm.gui.NavigatableComponent.ZoomChangeListener;
+import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
+import org.openstreetmap.josm.gui.util.GuiHelper;
+import org.openstreetmap.josm.io.OsmApiException;
 import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.spi.preferences.Config;
@@ -34,7 +41,12 @@ import org.openstreetmap.josm.tools.Destroyable;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Shortcut;
 
+/**
+ * The POJO class for Continuous Download
+ */
 public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destroyable {
+
+    private static final List<Consumer<Exception>> exceptionConsumers = new ArrayList<>();
 
     /**
      * The worker that runs all our downloads, it have more threads than
@@ -54,7 +66,8 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destro
     private boolean active;
 
     private DownloadPreference preference;
-    private JCheckBoxMenuItem menuItem;
+    private final JCheckBoxMenuItem menuItem;
+    private Double zoomDisabled;
 
     /**
      * Constructs a new {@code DownloadPlugin}.
@@ -72,6 +85,7 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destro
                 MainMenu.WINDOW_MENU_GROUP.ALWAYS);
         menuItem.setState(active);
         toggle.addButtonModel(menuItem.getModel());
+        exceptionConsumers.add(this::handleException);
     }
 
     @Override
@@ -87,6 +101,12 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destro
             return;
         MapView mv = MainApplication.getMap().mapView;
         Bounds bbox = mv.getLatLonBounds(mv.getBounds());
+        // Re-enable if the user has zoomed in
+        if (this.zoomDisabled != null && this.zoomDisabled > mv.getScale()) {
+            this.zoomDisabled = null;
+            this.active = true;
+            this.menuItem.setSelected(true);
+        }
 
         // Have the user changed view since last time
         if (active && (lastBbox == null || !lastBbox.equals(bbox))) {
@@ -119,12 +139,42 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destro
         return r;
     }
 
+    /**
+     * Handle download exceptions.
+     * @param exception the exception to handle
+     */
+    private void handleException(final Exception exception) {
+        if (exception instanceof OsmApiException && ((OsmApiException) exception).getErrorHeader().contains("requested too many")) {
+            this.active = false;
+            this.menuItem.setSelected(false);
+            this.zoomDisabled = Optional.ofNullable(MainApplication.getMap()).map(map -> map.mapView)
+                    .map(NavigatableComponent::getScale).orElse(null);
+            GuiHelper.runInEDT(() -> {
+                final Notification notification = new Notification(tr("Disabling continuous download until you zoom in"));
+                notification.setIcon(JOptionPane.WARNING_MESSAGE);
+                notification.show();
+            });
+        }
+    }
+
+    /**
+     * Get a list of handlers for exceptions from downloading data
+     * @return the exception handlers -- they take action based off of the exceptions passed in.
+     */
+    public static List<Consumer<Exception>> getDownloadExceptionConsumers() {
+        return Collections.unmodifiableList(exceptionConsumers);
+    }
+
+    /**
+     * Register download strategies
+     * @param strat The strategy to register
+     */
     public static void registerStrat(AbstractDownloadStrategy strat) {
         strats.put(strat.getClass().getSimpleName(), strat);
     }
 
     private class Task extends TimerTask {
-        private Bounds bbox;
+        private final Bounds bbox;
 
         public Task(Bounds bbox) {
             this.bbox = bbox;
@@ -143,7 +193,7 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destro
 
     private class ToggleAction extends JosmAction {
 
-        private transient Collection<ButtonModel> buttonModels;
+        private final transient Collection<ButtonModel> buttonModels;
 
         public ToggleAction() {
             super(tr("Download OSM data continuously"), "continuous-download",
@@ -160,6 +210,10 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destro
             zoomChanged(); // Trigger a new download
         }
 
+        /**
+         * Add a button model
+         * @param model The model to add. This action will toggle the selected state.
+         */
         public void addButtonModel(ButtonModel model) {
             if (model != null && !buttonModels.contains(model)) {
                 buttonModels.add(model);
@@ -186,5 +240,6 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destro
         MainApplication.getMenu().fileMenu.remove(menuItem);
         if (preference != null)
             preference.destroy();
+        exceptionConsumers.clear();
     }
 }
