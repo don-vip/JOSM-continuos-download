@@ -149,6 +149,9 @@ public abstract class AbstractDownloadStrategy {
      */
     private static void download(Collection<Bounds> bboxes, Class<?> klass) {
         for (Bounds bbox : bboxes) {
+            // This returns a task that has been started on a worker thread.
+            // if DownloadOsmTask2, it is on DownloadPlugin.worker
+            // Otherwise, it is on MainApplication.worker
             AbstractDownloadTask<?> task = getDownloadTask(klass);
             
             ProgressMonitor monitor = null;
@@ -157,7 +160,9 @@ public abstract class AbstractDownloadStrategy {
             }
 
             Future<?> future = task.download(new DownloadParams(), bbox, monitor);
-            DownloadPlugin.worker.execute(new PostDownloadHandler(task, future));
+            // Run the PostDownloadHandler on the main worker thread.
+            // This should tend to be the bit where we may run into concurrent modification exceptions.
+            MainApplication.worker.execute(new PostDownloadHandler(task, future));
         }
     }
 

@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -25,12 +26,14 @@ import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.Bounds;
+import org.openstreetmap.josm.data.preferences.IntegerProperty;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
 import org.openstreetmap.josm.gui.MapView;
 import org.openstreetmap.josm.gui.NavigatableComponent;
 import org.openstreetmap.josm.gui.NavigatableComponent.ZoomChangeListener;
 import org.openstreetmap.josm.gui.Notification;
+import org.openstreetmap.josm.gui.PleaseWaitRunnable;
 import org.openstreetmap.josm.gui.preferences.PreferenceSetting;
 import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.io.OsmApiException;
@@ -45,20 +48,27 @@ import org.openstreetmap.josm.tools.Shortcut;
  * The POJO class for Continuous Download
  */
 public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destroyable {
+    private static final IntegerProperty maxThreads = new IntegerProperty("plugin.continuos_download.max_threads", 2);
 
     private static final List<Consumer<Exception>> exceptionConsumers = new ArrayList<>();
 
     /**
-     * The worker that runs all our downloads, it have more threads than
+     * The worker that runs all our downloads, it has more threads than
      * {@link MainApplication#worker}.
      */
-    public static final ExecutorService worker = new ThreadPoolExecutor(1,
-            Config.getPref().getInt("plugin.continuos_download.max_threads", 2), 1, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<Runnable>());
+    public static final ExecutorService worker = new ThreadPoolExecutor(
+            /*
+             * maximumPoolSize only matters when the queue is full. Which should never happen (Integer.MAX_VALUE).
+             * We will set core size to maxThreads and allow them to time out
+             */
+            maxThreads.get(), maxThreads.get(), 1, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+            Executors.defaultThreadFactory());
     private static final HashMap<String, AbstractDownloadStrategy> strats = new HashMap<>();
     static {
         registerStrat(new SimpleStrategy());
         registerStrat(new BoxStrategy());
+        // This ensures that threads will be destroyed when not used.
+        ((ThreadPoolExecutor) worker).allowCoreThreadTimeOut(true);
     }
     private Timer timer;
     private TimerTask task;
@@ -84,6 +94,8 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destro
         menuItem = MainMenu.addWithCheckbox(MainApplication.getMenu().fileMenu, toggle,
                 MainMenu.WINDOW_MENU_GROUP.ALWAYS);
         menuItem.setState(active);
+        // If the user re-enables continuousDownload, reset the zoom disabled level.
+        menuItem.addChangeListener(l -> this.zoomDisabled = null);
         toggle.addButtonModel(menuItem.getModel());
         exceptionConsumers.add(this::handleException);
     }
@@ -146,7 +158,17 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destro
     private void handleException(final Exception exception) {
         if (exception instanceof OsmApiException && ((OsmApiException) exception).getErrorHeader().contains("requested too many")) {
             this.active = false;
-            this.menuItem.setSelected(false);
+            GuiHelper.runInEDT(() -> this.menuItem.setSelected(false));
+            final ThreadPoolExecutor executor = (ThreadPoolExecutor) worker;
+            // Remove anything that is currently in the queue. There are going to be a lot of PostDownloadHandler objects, which
+            // does not have cancel functionality. Unfortunately.
+            new ArrayList<>(executor.getQueue()).forEach(runnable -> {
+                executor.remove(runnable);
+                // DownloadTask is a subclass of PleaseWaitRunnable
+                if (runnable instanceof PleaseWaitRunnable) {
+                    ((PleaseWaitRunnable) runnable).operationCanceled();
+                }
+            });
             this.zoomDisabled = Optional.ofNullable(MainApplication.getMap()).map(map -> map.mapView)
                     .map(NavigatableComponent::getScale).orElse(null);
             GuiHelper.runInEDT(() -> {
