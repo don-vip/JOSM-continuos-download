@@ -33,6 +33,16 @@ public class DownloadOsmTask2 extends DownloadOsmTask {
         return download(new DownloadTask2(settings, reader, progressMonitor), downloadArea);
     }
 
+    @Override
+    protected Future<?> download(DownloadTask downloadTask, Bounds downloadArea) {
+        // This method needs to be overridden to avoid using JOSM's MainApplication.worker for downloads
+        this.downloadTask = downloadTask;
+        this.currentBounds = new Bounds(downloadArea);
+        // We need submit instead of execute so we can wait for it to finish and get the error
+        // message if necessary. If no one calls getErrorMessage() it just behaves like execute.
+        return DownloadPlugin.worker.submit(downloadTask);
+    }
+
     protected class DownloadTask2 extends DownloadTask {
         public DownloadTask2(DownloadParams settings, OsmServerReader reader,
                 ProgressMonitor progressMonitor) {
