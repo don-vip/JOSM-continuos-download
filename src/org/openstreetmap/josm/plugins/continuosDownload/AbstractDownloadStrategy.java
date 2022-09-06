@@ -4,6 +4,7 @@ package org.openstreetmap.josm.plugins.continuosDownload;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.concurrent.Future;
 
 import org.openstreetmap.josm.actions.downloadtasks.AbstractDownloadTask;
@@ -21,13 +22,25 @@ import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Logging;
 
+/**
+ * The base download strategy class
+ */
 public abstract class AbstractDownloadStrategy {
 
+    /**
+     * Fetch data
+     * @param bbox The bounds to fetch
+     */
     public void fetch(Bounds bbox) {
         this.fetch(bbox, OsmDataLayer.class);
         this.fetch(bbox, GpxLayer.class);
     }
 
+    /**
+     * Fetch data
+     * @param bbox The bounds to fetch
+     * @param klass The specific type to download. See {@link #getDownloadTask(Class)} for more information.
+     */
     public void fetch(Bounds bbox, Class<?> klass) {
         Collection<Bounds> existing = getExisting(klass);
         if (existing.isEmpty())
@@ -65,7 +78,8 @@ public abstract class AbstractDownloadStrategy {
         double downloadP = (areaToDownload * 100) / bbox.getArea();
         double downloadedP = (areaDownloaded * 100) / bbox.getArea();
 
-        Logging.info(String.format("Getting %.1f%% of area, already have %.1f%%, overlap %.1f%%%n", downloadP,
+        Logging.info(String.format(Locale.ENGLISH,
+                "Getting %.1f%% of area, already have %.1f%%, overlap %.1f%%%n", downloadP,
                 downloadedP,
                 downloadP + downloadedP - 100));
     }
@@ -89,10 +103,15 @@ public abstract class AbstractDownloadStrategy {
         return new Bounds(minY, minX, maxY, maxX);
     }
 
+    /**
+     * Get existing bounds
+     * @param klass The class to get. See {@link #getDownloadTask(Class)} for supported types.
+     * @return The collection of bounds that have already been downloaded.
+     */
     private static Collection<Bounds> getExisting(Class<?> klass) {
         if (klass.isAssignableFrom(OsmDataLayer.class)) {
             if (!MainApplication.isDisplayingMapView())
-                return null;
+                return Collections.emptyList();
             OsmDataLayer layer = MainApplication.getMap().mapView.getLayerManager().getEditLayer();
             if (layer == null) {
                 Collection<Layer> layers = MainApplication.getMap().mapView.getLayerManager().getLayers();
@@ -106,7 +125,7 @@ public abstract class AbstractDownloadStrategy {
             }
         } else if (klass.isAssignableFrom(GpxLayer.class)) {
             if (!MainApplication.isDisplayingMapView())
-                return null;
+                return Collections.emptyList();
             boolean merge = Config.getPref().getBoolean("download.gps.mergeWithLocal", false);
             Layer active = MainApplication.getMap().mapView.getLayerManager().getActiveLayer();
             if (active instanceof GpxLayer && (merge || ((GpxLayer) active).data.fromServer))
@@ -123,6 +142,11 @@ public abstract class AbstractDownloadStrategy {
 
     public abstract Collection<Bounds> getBoxes(Bounds bbox, Collection<Bounds> present, int maxAreas);
 
+    /**
+     * Download a collection of bounds
+     * @param bboxes The bounds to download
+     * @param klass The type to download. See {@link #getDownloadTask(Class)} for more information.
+     */
     private static void download(Collection<Bounds> bboxes, Class<?> klass) {
         for (Bounds bbox : bboxes) {
             AbstractDownloadTask<?> task = getDownloadTask(klass);
@@ -137,6 +161,11 @@ public abstract class AbstractDownloadStrategy {
         }
     }
 
+    /**
+     * Get the download task for a specified class
+     * @param klass The class to get the download class for. Currently supports {@link OsmDataLayer} and {@link GpxLayer}.
+     * @return The download task for the class
+     */
     private static AbstractDownloadTask<?> getDownloadTask(Class<?> klass) {
         if (klass.isAssignableFrom(OsmDataLayer.class))
             return new DownloadOsmTask2();

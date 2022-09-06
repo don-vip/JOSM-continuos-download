@@ -1,18 +1,22 @@
 package org.openstreetmap.josm.plugins.continuosDownload;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.openstreetmap.josm.data.Bounds;
+import org.openstreetmap.josm.gui.MainApplication;
 
-public class BoxStrategyTest {
+class BoxStrategyTest {
 
     @Test
-    public void test() {
+    void test() {
         ArrayList<Box> set = new ArrayList<>();
         set.add(new Box(0, 0, 1, 1));
         set.add(new Box(1, 1, 2, 2));
@@ -26,7 +30,7 @@ public class BoxStrategyTest {
     }
 
     @Test
-    public void test2() {
+    void test2() {
         Collection<Bounds> existing = new ArrayList<>();
         existing.add(new Bounds(0, 0, 1, 1));
 
@@ -41,7 +45,7 @@ public class BoxStrategyTest {
     }
 
     @Test
-    public void testStress() {
+    void testStress() {
         /*
          * This should be the worst case scenario. 25 boxes of 2x2 and a smaller
          * box some distance away.
@@ -56,5 +60,16 @@ public class BoxStrategyTest {
         /*Collection<Box> r =*/ BoxStrategy.optimalPart(4, set);
 
         assertTrue(System.currentTimeMillis() < t0 + 4000);
+    }
+
+    /**
+     * Non-regression test for #22351: NPE: Cannot invoke "java.util.Collection.isEmpty()" because "existing" is null
+     */
+    @Test
+    void testNonRegression22351() {
+        BoxStrategy boxStrategy = new BoxStrategy();
+        // We cannot be displaying a map view. This is largely a sanity check.
+        assertFalse(MainApplication.isDisplayingMapView());
+        assertDoesNotThrow(() -> boxStrategy.fetch(new Bounds(0, 0, 1, 1)));
     }
 }
