@@ -1,53 +1,54 @@
 package org.openstreetmap.josm.plugins.continuosDownload;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class BoxTest {
+/**
+ * Test class for {@link Box}
+ */
+class BoxTest {
 
     @Test
-    public void test_valid() {
-        assertEquals(true, new Box(0, 0, 1, 1).valid());
-        assertEquals(false, new Box(1, 1, 0, 0).valid());
+    void testValid() {
+        assertTrue(new Box(0, 0, 1, 1).valid());
+        assertFalse(new Box(1, 1, 0, 0).valid());
     }
 
     @Test
-    public void test_intersects() {
-        assertEquals(true, new Box(0, 0, 2, 2).intersects(new Box(1, 1, 3, 3)));
-        assertEquals(false, new Box(0, 0, 1, 1).intersects(new Box(1, 1, 2, 2)));
-        assertEquals(false, new Box(0, 0, 1, 1).intersects(new Box(0, 1, 1, 2)));
-        assertEquals(false, new Box(0, 0, 1, 1).intersects(new Box(1, 0, 2, 1)));
+    void testIntersects() {
+        assertTrue(new Box(0, 0, 2, 2).intersects(new Box(1, 1, 3, 3)));
+        assertFalse(new Box(0, 0, 1, 1).intersects(new Box(1, 1, 2, 2)));
+        assertFalse(new Box(0, 0, 1, 1).intersects(new Box(0, 1, 1, 2)));
+        assertFalse(new Box(0, 0, 1, 1).intersects(new Box(1, 0, 2, 1)));
     }
 
     @Test
-    public void test_equals() {
+    void testEquals() {
         assertEquals(new Box(1, 1, 2, 2), new Box(1, 1, 2, 2));
     }
 
     @Test
-    public void test_intersection() {
+    void testIntersection() {
         assertEquals(new Box(1, 1, 2, 2),
                 new Box(0, 0, 2, 2).intersection(new Box(1, 1, 3, 3)));
-        assertEquals(false,
-                (new Box(0, 0, 1, 1).intersection(new Box(1, 1, 2, 2))).valid());
-        assertEquals(false,
-                (new Box(0, 0, 1, 1).intersection(new Box(0, 1, 1, 2))).valid());
+        assertFalse((new Box(0, 0, 1, 1).intersection(new Box(1, 1, 2, 2))).valid());
+        assertFalse((new Box(0, 0, 1, 1).intersection(new Box(0, 1, 1, 2))).valid());
     }
 
     @Test
-    public void test_union() {
+    void testUnion() {
         assertEquals(new Box(0, 0, 2, 2),
                 new Box(0, 0, 1, 1).union(new Box(1, 1, 2, 2)));
     }
 
     @Test
-    public void test_inverse() {
+    void testInverse() {
         for (int i = 0; i < 100; i++) {
             Box x = random_box();
             for (Box y : x.inverse()) {
@@ -57,7 +58,7 @@ public class BoxTest {
     }
 
     @Test
-    public void test_subtract() {
+    void testSubtract() {
         for (int i = 0; i < 100; i++) {
             Box x = random_box();
             Box y = random_box();
@@ -69,10 +70,10 @@ public class BoxTest {
     }
 
     @Test
-    public void test_subtract_all() {
+    void testSubtractAll() {
         for (int i = 0; i < 10; i++) {
             Box x = random_box();
-            Collection<Box> array = new ArrayList<Box>(10);
+            Collection<Box> array = new ArrayList<>(10);
             for (int j = 0; j < 10; j++) {
                 array.add(random_box());
             }

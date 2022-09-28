@@ -1,15 +1,16 @@
 package org.openstreetmap.josm.plugins.continuosDownload;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
 import org.openstreetmap.josm.plugins.continuosDownload.BoxStrategy.Partition;
 
-public class BoxStrategyUnionTest {
+class BoxStrategyUnionTest {
 
     @Test
-    public void test() {
+    void test() {
         Partition a = new Partition();
         a = a.add(new Box(0, 0, 1, 1), 0);
         assertEquals(1, a.box.size());

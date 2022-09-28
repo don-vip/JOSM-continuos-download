@@ -15,6 +15,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -167,6 +168,10 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destro
                 // DownloadTask is a subclass of PleaseWaitRunnable
                 if (runnable instanceof PleaseWaitRunnable) {
                     ((PleaseWaitRunnable) runnable).operationCanceled();
+                }
+                // See #22363: Worker thread is blocked
+                if (runnable instanceof Future) {
+                    ((Future<?>) runnable).cancel(true);
                 }
             });
             this.zoomDisabled = Optional.ofNullable(MainApplication.getMap()).map(map -> map.mapView)
