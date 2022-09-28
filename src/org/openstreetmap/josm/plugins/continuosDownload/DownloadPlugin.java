@@ -96,7 +96,11 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destro
                 MainMenu.WINDOW_MENU_GROUP.ALWAYS);
         menuItem.setState(active);
         // If the user re-enables continuousDownload, reset the zoom disabled level.
-        menuItem.addChangeListener(l -> this.zoomDisabled = null);
+        menuItem.addChangeListener(l -> {
+            if (menuItem.isSelected()) {
+                this.zoomDisabled = null;
+            }
+        });
         toggle.addButtonModel(menuItem.getModel());
         exceptionConsumers.add(this::handleException);
     }
