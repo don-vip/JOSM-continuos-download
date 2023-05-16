@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.Future;
 
 import org.openstreetmap.josm.actions.downloadtasks.AbstractDownloadTask;
@@ -14,8 +15,10 @@ import org.openstreetmap.josm.actions.downloadtasks.PostDownloadHandler;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.MapView;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.gui.layer.Layer;
+import org.openstreetmap.josm.gui.layer.MainLayerManager;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
@@ -109,12 +112,17 @@ public abstract class AbstractDownloadStrategy {
      * @return The collection of bounds that have already been downloaded.
      */
     private static Collection<Bounds> getExisting(Class<?> klass) {
+        // The code used to use MainApplication.getMap().mapView.getLayerManager()
+        // That layer manager is almost always the same as MainApplication.getLayerManager()
+        // Regardless, keep the original code just in case.
+        final MainLayerManager layerManager = Optional.ofNullable(MainApplication.getMap()).map(map -> map.mapView)
+                .map(MapView::getLayerManager).orElseGet(MainApplication::getLayerManager);
         if (klass.isAssignableFrom(OsmDataLayer.class)) {
             if (!MainApplication.isDisplayingMapView())
                 return Collections.emptyList();
-            OsmDataLayer layer = MainApplication.getMap().mapView.getLayerManager().getEditLayer();
+            OsmDataLayer layer = layerManager.getEditLayer();
             if (layer == null) {
-                Collection<Layer> layers = MainApplication.getMap().mapView.getLayerManager().getLayers();
+                Collection<Layer> layers = layerManager.getLayers();
                 for (Layer layer1 : layers) {
                     if (layer1 instanceof OsmDataLayer)
                         return ((OsmDataLayer) layer1).data.getDataSourceBounds();
@@ -127,10 +135,10 @@ public abstract class AbstractDownloadStrategy {
             if (!MainApplication.isDisplayingMapView())
                 return Collections.emptyList();
             boolean merge = Config.getPref().getBoolean("download.gps.mergeWithLocal", false);
-            Layer active = MainApplication.getMap().mapView.getLayerManager().getActiveLayer();
+            Layer active = layerManager.getActiveLayer();
             if (active instanceof GpxLayer && (merge || ((GpxLayer) active).data.fromServer))
                 return ((GpxLayer) active).data.getDataSourceBounds();
-            for (GpxLayer l : MainApplication.getMap().mapView.getLayerManager().getLayersOfType(GpxLayer.class)) {
+            for (GpxLayer l : layerManager.getLayersOfType(GpxLayer.class)) {
                 if (merge || l.data.fromServer)
                     return l.data.getDataSourceBounds();
             }
