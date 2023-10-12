@@ -10,6 +10,7 @@ import java.util.concurrent.Future;
 
 import org.openstreetmap.josm.actions.downloadtasks.AbstractDownloadTask;
 import org.openstreetmap.josm.actions.downloadtasks.DownloadGpsTask;
+import org.openstreetmap.josm.actions.downloadtasks.DownloadNotesTask;
 import org.openstreetmap.josm.actions.downloadtasks.DownloadParams;
 import org.openstreetmap.josm.actions.downloadtasks.PostDownloadHandler;
 import org.openstreetmap.josm.data.Bounds;
@@ -19,6 +20,7 @@ import org.openstreetmap.josm.gui.MapView;
 import org.openstreetmap.josm.gui.layer.GpxLayer;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.MainLayerManager;
+import org.openstreetmap.josm.gui.layer.NoteLayer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
 import org.openstreetmap.josm.gui.progress.ProgressMonitor;
@@ -37,6 +39,7 @@ public abstract class AbstractDownloadStrategy {
     public void fetch(Bounds bbox) {
         this.fetch(bbox, OsmDataLayer.class);
         this.fetch(bbox, GpxLayer.class);
+        this.fetch(bbox, NoteLayer.class);
     }
 
     /**
@@ -143,6 +146,14 @@ public abstract class AbstractDownloadStrategy {
                     return l.data.getDataSourceBounds();
             }
             return Collections.emptyList();
+        } else if (klass.isAssignableFrom(NoteLayer.class)) {
+            if (MainApplication.isDisplayingMapView()) {
+                // JOSM only allows one note layer by default (so no need to have a merge check)
+                for (NoteLayer noteLayer : MainApplication.getLayerManager().getLayersOfType(NoteLayer.class)) {
+                    return noteLayer.getNoteData().getDataSourceBounds();
+                }
+            }
+            return Collections.emptyList();
         } else {
             throw new IllegalArgumentException();
         }
@@ -176,7 +187,7 @@ public abstract class AbstractDownloadStrategy {
 
     /**
      * Get the download task for a specified class
-     * @param klass The class to get the download class for. Currently supports {@link OsmDataLayer} and {@link GpxLayer}.
+     * @param klass The class to get the download class for. Currently supports {@link OsmDataLayer}, {@link GpxLayer}, and {@link NoteLayer}.
      * @return The download task for the class
      */
     private static AbstractDownloadTask<?> getDownloadTask(Class<?> klass) {
@@ -184,6 +195,9 @@ public abstract class AbstractDownloadStrategy {
             return new DownloadOsmTask2();
         if (klass.isAssignableFrom(GpxLayer.class))
             return new DownloadGpsTask();
+        if (klass.isAssignableFrom(NoteLayer.class)) {
+            return new DownloadNotesTask();
+        }
         throw new IllegalArgumentException();
     }
 

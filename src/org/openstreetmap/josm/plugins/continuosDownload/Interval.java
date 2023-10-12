@@ -52,10 +52,6 @@ public class Interval {
         if (!(obj instanceof Interval))
             return false;
         Interval other = (Interval) obj;
-        if (max != other.max)
-            return false;
-        if (min != other.min)
-            return false;
-        return true;
+        return max == other.max && min == other.min;
     }
 }

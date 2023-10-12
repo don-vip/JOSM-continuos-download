@@ -13,6 +13,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
 import org.openstreetmap.josm.gui.preferences.DefaultTabPreferenceSetting;
@@ -125,6 +126,6 @@ public class DownloadPreference extends DefaultTabPreferenceSetting implements D
 
     @Override
     public void destroy() {
-        guiPanes.forEach((gui, panel) -> gui.remove(panel));
+        guiPanes.forEach(JTabbedPane::remove);
     }
 }
