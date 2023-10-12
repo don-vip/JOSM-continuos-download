@@ -1,0 +1,14 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  call-workflow:
+    uses: JOSM/JOSMPluginAction/.github/workflows/ant.yml@v2
+    with:
+      josm-revision: "r14153"
+      perform-revision-tagging: ${{ github.repository == 'JOSM/continuos-download' && github.ref_type == 'branch' && github.ref_name == 'master' && github.event_name != 'schedule' && github.event_name != 'pull_request' && matrix.josm-revision == 'r14153' }}
+
+
