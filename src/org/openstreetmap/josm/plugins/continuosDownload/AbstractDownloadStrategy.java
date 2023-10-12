@@ -37,9 +37,15 @@ public abstract class AbstractDownloadStrategy {
      * @param bbox The bounds to fetch
      */
     public void fetch(Bounds bbox) {
-        this.fetch(bbox, OsmDataLayer.class);
-        this.fetch(bbox, GpxLayer.class);
-        this.fetch(bbox, NoteLayer.class);
+        if (Config.getPref().getBoolean("download.osm.data", true)) {
+            this.fetch(bbox, OsmDataLayer.class);
+        }
+        if (Config.getPref().getBoolean("download.osm.gps", false)) {
+            this.fetch(bbox, GpxLayer.class);
+        }
+        if (Config.getPref().getBoolean("download.osm.notes", false)) {
+            this.fetch(bbox, NoteLayer.class);
+        }
     }
 
     /**
