@@ -23,6 +23,7 @@ jobs:
     with:
       josm-revision: ${{ matrix.josm-revision }}
       perform-revision-tagging: ${{ github.repository == 'JOSM/continuos-download' && github.ref_type == 'branch' && github.ref_name == 'master' && github.event_name != 'schedule' && github.event_name != 'pull_request' && matrix.josm-revision == 'r14153' }}
+      plugin-jar-name: "continuosDownload"
     secrets: inherit
     permissions:
       checks: write
