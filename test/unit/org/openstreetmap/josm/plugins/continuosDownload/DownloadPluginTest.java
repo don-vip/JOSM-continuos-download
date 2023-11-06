@@ -11,15 +11,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.jar.Attributes;
 
-import mockit.Mock;
-import mockit.MockUp;
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openstreetmap.josm.data.Bounds;
 import org.openstreetmap.josm.data.DataSource;
 import org.openstreetmap.josm.data.coor.LatLon;
@@ -35,21 +32,22 @@ import org.openstreetmap.josm.io.OsmTransferException;
 import org.openstreetmap.josm.plugins.PluginException;
 import org.openstreetmap.josm.plugins.PluginInformation;
 import org.openstreetmap.josm.spi.preferences.Config;
-import org.openstreetmap.josm.testutils.JOSMTestRules;
 import org.openstreetmap.josm.testutils.annotations.BasicPreferences;
+import org.openstreetmap.josm.testutils.annotations.Main;
+import org.openstreetmap.josm.testutils.annotations.Projection;
 import org.openstreetmap.josm.tools.ReflectionUtils;
+
+import mockit.Mock;
+import mockit.MockUp;
 
 /**
  * Test class for {@link DownloadPlugin}
  * @author Taylor Smock
  */
 @BasicPreferences
+@Main
+@Projection
 class DownloadPluginTest {
-
-    // Needed to cleanup layers
-    @RegisterExtension
-    static JOSMTestRules josmTestRules = new JOSMTestRules().main().projection();
-
     @AfterEach
     void cleanUp() {
         // We must clean up the worker thread. First, clean up the queue.
