@@ -1,0 +1,9 @@
+7588_Plugin-Url: v1.1.01;https://github.com/Gnonthgol/JOSM-continuos-download/releases/download/v1.1.01/continuosDownload.jar
+7636_Plugin-Url: v1.1.02;https://github.com/Gnonthgol/JOSM-continuos-download/releases/download/v1.1.02/continuosDownload.jar
+8942_Plugin-Url: v1.2.2;https://github.com/JOSM/JOSM-continuos-download/releases/download/v1.2.2/continuosDownload.jar
+10282_Plugin-Url: v1.2.3;https://github.com/JOSM/JOSM-continuos-download/releases/download/v1.2.3/continuosDownload.jar
+10580_Plugin-Url: v1.2.4;https://github.com/JOSM/JOSM-continuos-download/releases/download/v1.2.4/continuosDownload.jar
+12643_Plugin-Url: v1.2.5;https://github.com/JOSM/JOSM-continuos-download/releases/download/v1.2.5/continuosDownload.jar
+12840_Plugin-Url: v1.2.6;https://github.com/JOSM/JOSM-continuos-download/releases/download/v1.2.6/continuosDownload.jar
+13927_Plugin-Url: v1.2.8;https://github.com/JOSM/JOSM-continuos-download/releases/download/v1.2.8/continuosDownload.jar
+14153_Plugin-URL: v103;https://github.com/JOSM/continuos-download/releases/download/v103/continuosDownload.jar

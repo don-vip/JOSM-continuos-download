@@ -161,7 +161,8 @@ public class DownloadPlugin extends Plugin implements ZoomChangeListener, Destro
      * @param exception the exception to handle
      */
     private void handleException(final Exception exception) {
-        if (exception instanceof OsmApiException && ((OsmApiException) exception).getErrorHeader().contains("requested too many")) {
+        if (exception instanceof OsmApiException && ((OsmApiException) exception).getErrorHeader() != null &&
+                ((OsmApiException) exception).getErrorHeader().contains("requested too many")) {
             this.active = false;
             GuiHelper.runInEDT(() -> this.menuItem.setSelected(false));
             final ThreadPoolExecutor executor = (ThreadPoolExecutor) worker;

@@ -4,7 +4,7 @@
     <!-- enter the SVN commit message -->
     <property name="commit.message" value="Commit message"/>
     <!-- enter the *lowest* JOSM version this plugin is currently compatible with -->
-    <property name="plugin.main.version" value="14153"/>
+    <property name="plugin.main.version" value="19044"/>
 
     <!-- Configure these properties (replace "..." accordingly).
          See https://josm.openstreetmap.de/wiki/DevelopersGuide/DevelopingPlugins
@@ -26,6 +26,7 @@
             <attribute name="12643_Plugin-Url" value="v1.2.5;https://github.com/JOSM/JOSM-continuos-download/releases/download/v1.2.5/continuosDownload.jar" />
             <attribute name="12840_Plugin-Url" value="v1.2.6;https://github.com/JOSM/JOSM-continuos-download/releases/download/v1.2.6/continuosDownload.jar" />
             <attribute name="13927_Plugin-Url" value="v1.2.8;https://github.com/JOSM/JOSM-continuos-download/releases/download/v1.2.8/continuosDownload.jar" />
+            <attribute name="14153_Plugin-Url" value="v103;https://github.com/JOSM/JOSM-continuos-download/releases/download/v103/continuosDownload.jar" />
         </manifest>
     </target>
 
