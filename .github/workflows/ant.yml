@@ -55,6 +55,8 @@ jobs:
       plugin-jar-name: "continuosDownload"
     secrets: inherit
     permissions:
+      attestations: write
       checks: write
       contents: write
       deployments: write
+      id-token: write
