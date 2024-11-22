@@ -34,7 +34,7 @@ public class DownloadPreference extends DefaultTabPreferenceSetting implements D
     private final JTextField extraDownload = new JTextField(4);
     private final JTextField maxArea = new JTextField(4);
     private final JComboBox<String> strategy = new JComboBox<>();
-    private final JCheckBox quietDownload = new JCheckBox(tr("Supress the default modal progress monitor when downloading."));
+    private final JCheckBox quietDownload = new JCheckBox(tr("Download data in background."));
 
     private final Map<PreferenceTabbedPane, JPanel> guiPanes = new HashMap<>();
     /**
@@ -98,10 +98,8 @@ public class DownloadPreference extends DefaultTabPreferenceSetting implements D
         panel.add(strategy, GBC.eol().fill(GridBagConstraints.HORIZONTAL).insets(5, 0, 0, 5));
 
         // quietDownload
-        quietDownload.setSelected(Config.getPref().getBoolean("plugin.continuos_download.quiet_download", false));
-        quietDownload.setToolTipText(tr("Suppress the progress monitor that is shown when downloading. If"
-                + " this option is selected there is no indication that something is being done, and no way to"
-                + " cancel the download."));
+        quietDownload.setSelected(Config.getPref().getBoolean("plugin.continuos_download.quiet_download", true));
+        quietDownload.setToolTipText(tr("Downloads the data continuously in the background as you pan and zoom around."));
         panel.add(quietDownload, GBC.eol().insets(0, 0, 0, 0));
 
         panel.add(Box.createVerticalGlue(), GBC.eol().fill(GridBagConstraints.VERTICAL));
